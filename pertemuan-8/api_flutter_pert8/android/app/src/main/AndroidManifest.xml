@@ -1,4 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Izin HTTP GET untuk mengambil data awal JSONPlaceholder pada Android. -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="api_flutter_pert8"
         android:name="${applicationName}"

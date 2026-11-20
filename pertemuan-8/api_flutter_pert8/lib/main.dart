@@ -4,6 +4,10 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'l10n/app_localizations.dart';
 import 'services/api_service.dart';
+import 'config/assignment_config.dart';
+import 'models/user_model.dart';
+import 'screens/admin_screen.dart';
+import 'screens/user_detail_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -102,6 +106,15 @@ class _HomeScreenState extends State<HomeScreen> {
         foregroundColor: Colors.white,
 
         actions: [
+          // Buka halaman Admin tanpa mengubah fitur User lama.
+          IconButton(
+            icon: const Icon(Icons.admin_panel_settings),
+            tooltip: 'Daftar Admin',
+            onPressed: () => Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const AdminScreen()),
+            ),
+          ),
           IconButton(
             icon: const Icon(Icons.info_outline),
             tooltip: 'Lokasi File JSON',
@@ -253,7 +266,10 @@ class _HomeScreenState extends State<HomeScreen> {
             );
           }
 
-          final users = snapshot.data ?? [];
+          // Data JSON diubah menjadi objek User melalui Model User.
+          final users = (snapshot.data ?? [])
+              .map((item) => User.fromJson(Map<String, dynamic>.from(item as Map)))
+              .toList();
 
           if (users.isEmpty) {
             return Center(
@@ -282,7 +298,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     leading: CircleAvatar(
                       backgroundColor: Colors.blue.shade100,
                       child: Text(
-                        user['name'][0],
+                        user.name.isNotEmpty ? user.name[0] : '?',
                         style: const TextStyle(
                           color: Colors.blue,
                           fontWeight: FontWeight.bold,
@@ -291,16 +307,25 @@ class _HomeScreenState extends State<HomeScreen> {
                     ),
 
                     title: Text(
-                      user['name'],
+                      user.name,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
 
-                    subtitle: Text(user['email']),
+                    subtitle: Text(user.email),
 
-                    trailing: const Icon(
-                      Icons.chevron_right,
+                    // Detail User via GET by ID, sementara ketuk kartu
+                    // tetap membuka halaman API Tester seperti sebelumnya.
+                    trailing: IconButton(
+                      icon: const Icon(Icons.info_outline),
+                      tooltip: 'Lihat detail User',
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => UserDetailScreen(userId: user.id),
+                        ),
+                      ),
                     ),
 
                     onTap: () {
@@ -308,7 +333,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         context,
                         MaterialPageRoute(
                           builder: (context) => ApiTesterScreen(
-                            initialId: user['id'],
+                            initialId: user.id,
                           ),
                         ),
                       ).then((_) => refreshData());
@@ -668,11 +693,11 @@ class _ApiTesterScreenState extends State<ApiTesterScreen> {
                 isGet
                     ? 'GET: Mengambil data pengguna berdasarkan ID.'
                     : isPost
-                    ? 'POST: Mengirim data pengguna baru.'
+                    ? 'POST: Menambah User dengan ID ${AssignmentConfig.userId} (N = ${AssignmentConfig.n}).'
                     : isPut
                     ? 'PUT: Mengganti nama dan email pengguna.'
                     : isPatch
-                    ? 'PATCH: Memperbarui nama pengguna saja.'
+                    ? 'PATCH: Menambahkan teks - Flutter Developer ke nama User.'
                     : 'DELETE: Mengirim permintaan penghapusan pengguna.',
                 style: const TextStyle(
                   fontSize: 13,

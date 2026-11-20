@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io' as io;
+import '../config/assignment_config.dart';
 
 class ApiService {
   static const String baseUrl = 'https://jsonplaceholder.typicode.com';
@@ -141,16 +142,12 @@ class ApiService {
     await Future.delayed(const Duration(milliseconds: 300));
     final users = await _readJsonData();
 
-    // Hitung ID baru
-    int newId = 1;
-    if (users.isNotEmpty) {
-      final existingIds = users
-          .map<int>((u) => (u['id'] is int
-              ? u['id'] as int
-              : int.tryParse(u['id'].toString()) ?? 0))
-          .toList();
-      existingIds.sort();
-      newId = existingIds.last + 1;
+    // ID User wajib mengikuti rumus tugas: 1499 + N.
+    final newId = AssignmentConfig.userId;
+    if (users.any((u) => int.tryParse(u['id'].toString()) == newId)) {
+      throw Exception(
+        'ID $newId sudah digunakan. Hapus User tersebut sebelum POST ulang.',
+      );
     }
 
     final newUser = {
@@ -208,7 +205,9 @@ class ApiService {
     }
 
     final existing = Map<String, dynamic>.from(users[index]);
-    existing['name'] = name;
+    // PATCH menambahkan akhiran yang diminta dosen sekali saja.
+    const suffix = ' - Flutter Developer';
+    existing['name'] = name.endsWith(suffix) ? name : '$name$suffix';
 
     users[index] = existing;
     await _writeJsonData(users);
